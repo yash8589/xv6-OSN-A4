@@ -13,7 +13,7 @@ extern char trampoline[], uservec[], userret[];
 
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
-
+int cowfault(pagetable_t pagetable, uint64 va);
 extern int devintr();
 
 void
@@ -49,8 +49,17 @@ usertrap(void)
   
   // save user program counter.
   p->trapframe->epc = r_sepc();
-  
-  if(r_scause() == 8){
+
+  // reference: Page 8 of https://pdos.csail.mit.edu/6.828/2019/lec/l-usingvm.pdf  
+  // The r_scause of page fault is 15 
+  if (r_scause() == 15)
+ {
+   if ((cowfault(p->pagetable, r_stval()) )< 0)
+   {
+     p->killed = 1;
+   }
+ }
+  else if(r_scause() == 8){
     // system call
 
     if(killed(p))
@@ -219,3 +228,31 @@ devintr()
   }
 }
 
+
+// va is invalid if it is more than MAXVA, not in pg table, and not set user bit or valid bit
+// Now allocate a new page and copy the data from the original page to the new page
+int cowfault(pagetable_t pagetable, uint64 va)
+{
+  // invalid if va is more than max va
+  if (va >= MAXVA)
+    return -1;
+  pte_t *pte = walk(pagetable, va, 0);
+  // invalid if va is not in pg table
+  if (pte == 0)
+    return -1;
+  // invalid if va is not set user bit or valid bit
+  if ((*pte & PTE_V) == 0 || (*pte & PTE_U) == 0)
+    return -1;
+  uint64 page2 = (uint64)kalloc();
+  uint64 page1 = PTE2PA(*pte);
+  
+  // error handling
+  if (page2 == 0){
+    return -1;
+  }
+ 
+  memmove((void *)page2, (void *)page1, PGSIZE);
+  *pte = PA2PTE(page2) | PTE_U | PTE_V | PTE_W | PTE_X|PTE_R;
+   kfree((void *)page1);
+  return 0;
+}
