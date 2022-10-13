@@ -236,6 +236,8 @@ int cowfault(pagetable_t pagetable, uint64 va)
   // invalid if va is more than max va
   if (va >= MAXVA)
     return -1;
+  if(va == 0)
+    return -1;
   pte_t *pte = walk(pagetable, va, 0);
   // invalid if va is not in pg table
   if (pte == 0)
