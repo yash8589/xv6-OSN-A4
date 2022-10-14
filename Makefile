@@ -134,6 +134,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_strace\
 	_cowtest\
+	_alarmtest\
 
 
 fs.img: mkfs/mkfs README $(UPROGS)

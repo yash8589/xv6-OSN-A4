@@ -61,9 +61,10 @@ int argint(int n, int *ip)
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
-void argaddr(int n, uint64 *ip)
+int argaddr(int n, uint64 *ip)
 {
   *ip = argraw(n);
+  return (0);
 }
 
 // Fetch the nth word-sized system call argument as a null-terminated string.
@@ -81,6 +82,8 @@ extern uint64 sys_fork(void);
 extern uint64 sys_exit(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_trace(void);
+extern uint64 sys_sigalarm(void);
+extern uint64 sys_sigreturn(void);
 extern uint64 sys_pipe(void);
 extern uint64 sys_read(void);
 extern uint64 sys_kill(void);
@@ -125,16 +128,18 @@ static uint64 (*syscalls[])(void) = {
     [SYS_mkdir] sys_mkdir,
     [SYS_close] sys_close,
     [SYS_trace] sys_trace,
+    [SYS_sigalarm] sys_sigalarm,
+    [SYS_sigreturn] sys_sigreturn,
 };
 
 // number of arguments for each system call
-static int numargs[23] = {
-    1, 1, 1, 1, 1, 1, 1, 3, 2, 3, 3, 1, 2, 1, 1, 1, 1, 1, 3, 1, 2, 2, 1
+static int numargs[25] = {
+    1, 1, 1, 1, 1, 1, 1, 3, 2, 3, 3, 1, 2, 1, 1, 1, 1, 1, 3, 1, 2, 2, 1, 2, 0
 };
 
 // list of system calls to match the numargs list
-static char *syscall_list[23] = {
-    "mkdir", "close", "trace", "-", "fork", "exit", "wait", "pipe", "open", "write", "mknod", "unlink", "link", "dup", "getpid", "sbrk", "sleep", "uptime", "read", "kill", "exec", "fstat", "chdir"
+static char *syscall_list[25] = {
+    "mkdir", "close", "trace", "-", "fork", "exit", "wait", "pipe", "open", "write", "mknod", "unlink", "link", "dup", "getpid", "sbrk", "sleep", "uptime", "read", "kill", "exec", "fstat", "chdir", "sigalarm", "sigreturn"
 };
 
 void syscall(void)

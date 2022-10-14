@@ -53,12 +53,12 @@ usertrap(void)
   // reference: Page 8 of https://pdos.csail.mit.edu/6.828/2019/lec/l-usingvm.pdf  
   // The r_scause of page fault is 15 
   if (r_scause() == 15)
- {
+  {
    if ((cowfault(p->pagetable, r_stval()) )< 0)
    {
      p->killed = 1;
    }
- }
+  }
   else if(r_scause() == 8){
     // system call
 
@@ -87,9 +87,42 @@ usertrap(void)
 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
+  {
+    // enter only if alarm_interval is not 0 (if alarm_interval is 0, then it is not a timer interrupt)
+    if(p->alarm_interval != 0) 
+    {
+      if(--p->alarm_ticks <= 0) 
+      {
+        // enter only if no other alarm is being handled
+        if(!p->alarm_goingoff) 
+        { 
+          p->alarm_ticks = p->alarm_interval;
+          // jump to execute alarm_handler
+          *p->alarm_trapframe = *p->trapframe; // backup trapframe
+          p->trapframe->epc = (uint64)p->alarm_handler;
+          p->alarm_goingoff = 1;
+        }
+      }
+    }
     yield();
-
+  }
   usertrapret();
+}
+
+int sigalarm(int ticks, void(*handler)()) {
+  struct proc *p = myproc();
+  int temp = ticks;
+  p->alarm_interval = temp;
+  p->alarm_ticks = ticks;
+  p->alarm_handler = handler;
+  return 0;
+}
+
+int sigreturn() {
+  struct proc *p = myproc();
+  *p->trapframe = *p->alarm_trapframe;
+  p->alarm_goingoff = 0;
+  return 0;
 }
 
 //

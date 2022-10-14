@@ -102,3 +102,20 @@ sys_trace(void)
   myproc()->mask = mask;
   return 0;
 }
+
+uint64 sys_sigalarm(void) {
+  int n;
+  uint64 fn;
+  // if number of ticks is negative, return -1
+  if(argint(0, &n) < 0)
+    return -1;
+  // if function pointer is not valid, return -1
+  if(argaddr(1, &fn) < 0)
+    return -1;
+  // if no problems with the arguments, sigalarm is called
+  return sigalarm(n, (void(*)())(fn));
+}
+
+uint64 sys_sigreturn(void) {
+	return sigreturn();
+}

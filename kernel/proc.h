@@ -92,6 +92,8 @@ struct proc {
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
   int mask;                    // Mask for signals
+  struct trapframe *alarm_trapframe;  // A copy of trapframe right before running alarm_handler
+  int alarm_goingoff;          // prevent re-entrance of alarm_handler
 
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
@@ -105,4 +107,11 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+
+  int alarm_interval;          // clock period (0 for disabled)
+  void(*alarm_handler)();      // clock callback handler
+  int alarm_ticks;             // number of ticks left before next alarm goes off
+  
+
 };

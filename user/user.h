@@ -25,6 +25,9 @@ int uptime(void);
 
 // definition of syscall trace
 int trace(int);
+// definition of syscall sigalarm
+int sigalarm(int, void (*handler)());
+int sigreturn(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
